@@ -23,7 +23,6 @@ function solve1(parsed)
     indices = [diagi, (-).(diagi), diagi2, (-).(diagi2), hori, (-).(hori), verti, (-).(verti)]
     
     nfound = 0
-    bitarr = falses(size(parsed))
     for idx in CartesianIndices(parsed)
         parsed[idx] == 'X' || continue
         for idxset in indices
@@ -31,7 +30,6 @@ function solve1(parsed)
                 str = String(parsed[idx .+ idxset])
                 if str == "XMAS"
                     nfound += 1
-                    bitarr[idx .+ idxset] .= true
                 end
             catch e
                 e isa BoundsError && continue
@@ -39,7 +37,6 @@ function solve1(parsed)
             end
         end
     end
-    println(bitarr)
     nfound
 end
 export solve1
@@ -47,22 +44,15 @@ export solve1
 
 function solve2(parsed)
     indices = vec([vec([CartesianIndex(i, j) for i in si:-si*2:-si, j in sj:-sj*2:-sj]) for si=-1:2:1, sj=-1:2:1])
-    println(indices)
-    truewords = ["MMSS", "MMSS", "MSMS", "MSMS"]
     nfound = 0
-    bitarr = falses(size(parsed))
     for idx in CartesianIndices(parsed)
         parsed[idx] == 'A' || continue
-        cont = false
         for (idxn, idxset) in enumerate(indices)
             try
-                str1 = String(parsed[idx .+ idxset])
-                str2 = String(parsed[idx .+ idxset[2:2:4]])
-                println(str1, str2)
-                if str1 == "MSMS" || str1 == "MMSS"
+                str = String(parsed[idx .+ idxset])
+                println(str)
+                if str == "MSMS" || str == "MMSS"
                     nfound += 1
-                    bitarr[idx .+ idxset] .= true
-                    bitarr[idx] = true
                     break
                 end
             catch e
@@ -71,7 +61,6 @@ function solve2(parsed)
             end
         end
     end
-    println(bitarr)
     nfound
 end
 export solve2
