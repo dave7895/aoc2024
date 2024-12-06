@@ -65,7 +65,7 @@ function leaves(obstacles, guardpos, direction)
         #display(obstacles)
         #obstacles[guardpos] = 2
         infront = 0
-        cartdir = CartesianIndex(direction...)
+        cartdir = CartesianIndex(Tuple(direction))
         try
             infront = obstacles[guardpos + cartdir]
         catch e
