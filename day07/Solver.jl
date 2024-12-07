@@ -2,92 +2,128 @@ module Solver
 using Test
 using AoC
 using AoC.Utils
-
+using ProgressMeter
 
 function parse_input(raw_data)
     raw_data
     parsed = []
     for line in eachline(IOBuffer(raw_data))
         testres, nums = split(line, ": ")
-        push!(parsed, (parse(Int, testres), parse.(Int, split(nums, ' '))))
+        push!(parsed, (parse(BigInt, testres), parse.(BigInt, split(nums, ' '))))
     end
     parsed
 end
 export parse_input
 
 function calculate(nums, ops)
-    res = ops[1](nums[1], nums[2])
+    return ∘(ops...)(nums...)
+    # short for ->
+    #=res = ops[1](nums[1], nums[2])
     for i in 2:length(ops)
         res = ops[i](res, nums[i+1])
     end
-    res
+    res=#
 end
 
 function solve1(parsed)
     nsum = 0
     @show length(parsed)
     i = 0
-    Threads.@threads :dynamic for (res, nums) in copy(parsed)
-        print("\r$(i+=1), $(Threads.threadid())")
-        for ops in Iterators.product(repeat([(+, *)], length(nums)-1)...)
-            calcres = calculate(nums, ops)
-            if calcres == res
-                nsum += res
+    works = Int[]
+    for (res, nums) in deepcopy(parsed)
+        print("\r$(res), $(Threads.threadid())")
+        found = false
+        origres = res
+        for i in 1:length(nums)
+            res < 0 && break
+            res == 0 && !isempty(nums) && break
+            lastnum = popat!(nums, lastindex(nums))
+            newres, rem = divrem(res, lastnum)
+            if rem == 0
+                res = newres
+            else
+                res -= lastnum
+            end
+            if isempty(nums) && ((isone(res) && iszero(rem)) || iszero(res))
+                nsum += origres
+                push!(works, origres)
+                found = true
                 break
             end
+        end
+    end
+    nsum
+    nsum = 0
+    for (res, nums) in deepcopy(parsed)
+        origres = res
+        @show origres
+        possible = checkpossible(res, nums, false)
+        if possible
+            @info "adding $origres to nsum"
+            nsum += origres
         end
     end
     nsum
 end
 export solve1
 
-
-function solve2(parsed)
-    nsum = 0
-    lck = ReentrantLock()
-    @show length(parsed)
-    i = 0
-    myop(i1, i2) = parse(Int, string(i1)*string(i2))
-    works = Int[]
-    for (res, nums) in copy(parsed)
-        print("\r$(i+=1), $(Threads.threadid())")
-        found = false
-        for availops in [(+,), (*,), (+, *)]
-            for ops in Iterators.product(repeat([availops], length(nums)-1)...)
-                #availops == (+, *) && all(==(*), ops) && continue
-                calcres = calculate(nums, ops)
-                if calcres == res
-                    nsum += res
-                    push!(works, res)
-                    found = true
-                    break
+function checkpossible(res, nums, usecat=true, rem=-1)
+    #=@show usecat=#
+    doprint = false
+    doprint && @show res
+    doprint && @show nums
+    res < 0 && return false
+    if isempty(nums)
+        doprint && @info "shortcutting with $res, $nums, $rem"
+        iszero(rem) && isone(res) && return true
+        iszero(res) && return true
+    end
+    nums = copy(nums)
+    for i in 1:length(nums)
+            lastnum = popat!(nums, lastindex(nums))
+            newres, rem = divrem(res, lastnum)
+            resstr = string(res)
+            endstr = string(lastnum)
+            if rem == 0
+                possible = checkpossible(newres, nums, usecat, rem)
+                possible && return true
+            end
+            if usecat && endswith(resstr, endstr)
+                newresstr = resstr[begin:end-length(endstr)]
+                if isempty(newresstr)
+                    isempty(nums) && return true
+                else
+                    doprint && println("$newresstr $(isempty(newresstr))")
+                    possible = checkpossible(parse(Int, newresstr), nums, usecat)
+                    possible && return true
                 end
             end
-            found && break
-        end
-    end
-    println("part 1 is $nsum")
-    myop2(i, j)=Int(i*exp10(round(Int, log10(j), RoundUp))+j)
-    Threads.@threads :dynamic for (res, nums) in copy(parsed)
-        res in works && continue
-        print("\r$(i+=1), $(Threads.threadid())")
-        opsarr = vec(collect(Iterators.product(repeat([(+, *, myop2)], length(nums)-1)...)))
-        if rem(res, last(nums)) == 0
-            #display(opsarr)
-            sort!(opsarr, by=x->(last(x)==(*)))
-        end
-        if endswith(string(res), string(last(nums)))
-            sort!(opsarr, by=x->(last(x)==myop2))
-        end
-        #@show length(opsarr)
-        for ops in opsarr
-            calcres = calculate(nums, ops)
-            if calcres == res
-                lock(lck)
-                nsum += res
-                unlock(lck)
-                break
+            begin
+                doprint && @info "checking for plus $res-$lastnum, $nums"
+                possible = checkpossible(res-lastnum, nums, usecat)
+                possible && return true
             end
+            return false
+        end
+        false
+end
+
+function solve2(parsed)
+    @warn "starting part 2"
+    nsum = 0
+    @show length(parsed)
+    i = 0
+    works = Int[]
+    for (res, nums) in deepcopy(parsed)
+        #print("\r$(res), $(Threads.threadid())")
+        found = false
+        origres = res
+        possible = checkpossible(res, nums, true)
+        if possible
+            println("$origres works")
+            (nsum += origres)
+        else
+            println("$origres does not work")
         end
     end
     nsum
@@ -107,9 +143,15 @@ testinput = """
 192: 17 8 14
 21037: 9 7 18 13
 292: 11 6 16 20
+123: 1 2 3
+6: 1 1 1 1 1 1
+232: 1 23 2
+244: 3 4 2 2
+32: 15 16
+1303: 58 5 643 75 297
 """
-testanswer_1 = 3749
-testanswer_2 = 11387
+testanswer_1 = 3749 + 6
+testanswer_2 = 11387 + 123 + 6 + 232 + 244
 export testinput, testanswer_1, testanswer_2
 
 test() = AoC.test_solution(solution, testinput, testanswer_1, testanswer_2)
@@ -120,3 +162,8 @@ export main
 
 
 end # module Solver
+
+if abspath(PROGRAM_FILE) == @__FILE__
+    using .Solver
+    main()
+end
