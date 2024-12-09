@@ -54,15 +54,11 @@ function solve2(parsed)
         empties = findall(==(-1), layout[1:locblock])
         isempty(empties) && break
         loc = -1
-        idx = 1
-        while idx < lastpossible #empt in empties
-            empt = empties[idx]
+        for empt in empties
             if all(==(-1), layout[empt:empt+len])
                 loc = empt
                 break
             end
-            idx = findnext(>(empt+sz), empties, idx)
-            isnothing(idx) && break
         end
         if loc != -1 && loc < locblock
             layout[locblock:locblock+len], layout[loc:loc+len] = layout[loc:loc+len], layout[locblock:locblock+len]
