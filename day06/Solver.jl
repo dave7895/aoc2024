@@ -4,7 +4,6 @@ using AoC
 using AoC.Utils
 using LinearAlgebra
 import Base.rotr90
-
 function parse_input(raw_data)
     raw_data
     linearr = []
@@ -52,17 +51,12 @@ export solve1
 
 rotr90(v::AbstractVector) = [0 1; -1 0] * v
 rotn(n) = ∘(repeat([rotr90], n)...)
-rotdict = Dict(CartesianIndex(rotn(i)([-1, 0])...)=>CartesianIndex(rotn(i+1)([-1, 0])...) for i in 1:4)
-println("rotdict defined")
-for k in keys(rotdict)
-    @show k
-    @show rotdict[k]
-    @show rotr90([k.I...])
-end
+const rotdict = Dict(CartesianIndex(rotn(i)([-1, 0])...)=>CartesianIndex(rotn(i+1)([-1, 0])...) for i in 1:4)
+rotr90(idx::CartesianIndex)=rotdict[idx]
 
-function leaves(obstacles, guardpos, direction)
+function leaves(obstacles, guardpos, direction, needscopy=false)
     guardpos = CartesianIndex(guardpos.I...)
-    obstacles = copy(obstacles)
+    needscopy && (obstacles = copy(obstacles))
     direction = copy(direction)
     leftmap = false
     cartdir = CartesianIndex(direction...)
@@ -79,7 +73,7 @@ function leaves(obstacles, guardpos, direction)
         end
         if isone(infront)
             #direction = rotr90(direction)
-            cartdir = rotdict[cartdir]
+            cartdir = rotr90(cartdir)
         else
             guardpos = guardpos + cartdir
         end
@@ -91,87 +85,20 @@ function solve2(parsed)
     obstacles, guardpos = parsed
     iniguardpos = CartesianIndex(guardpos.I...)
     direction = [-1, 0]
-    rotr90(v::AbstractVector) = [0 1; -1 0] * v
-    dirdict = Dict([∘(repeat([rotr90], i)...)([-1, 0])=>(1<<i) for i in 1:4])
-    leftmap = false
     obspos = Set()
     lck = ReentrantLock()
     for i in eachindex(obstacles)
         obstacles[i] == 1 && continue
-        obs = copy(obstacles)
+        #obs = copy(obstacles)
+        obs = obstacles
         obs[i] = 1
         if !leaves(obs, iniguardpos, direction)
             lock(lck)
             push!(obspos, i)
             unlock(lck)
         end
+        obs[i] = 0
     end
-    #=while leftmap == false
-        #@show guardpos
-        #display(obstacles)
-        obstacles[guardpos] |= dirdict[direction]
-        infront = 0
-        cartdir = CartesianIndex(direction...)
-        try
-            infront = obstacles[guardpos + cartdir]
-        catch e
-            if e isa BoundsError
-                leftmap = true
-                break
-            end
-        end
-        if isone(infront)
-            direction = rotr90(direction)
-        else
-            guardpos = guardpos + cartdir
-        end
-    end
-    display(obstacles)
-    leftmap = false
-    guardpos = iniguardpos
-    direction = [-1, 0]
-    while leftmap == false
-        print("\r$(length(obspos))")
-        #@show guardpos
-        #display(obstacles)
-        infront = 0
-        cartdir = CartesianIndex(direction...)
-        try
-            infront = obstacles[guardpos + cartdir]
-        catch e
-            if e isa BoundsError
-                leftmap = true
-                break
-            end
-        end
-        if isone(infront)
-            direction = rotr90(direction)
-        else
-            newdir = rotr90(direction)
-            Threads.@threads :greedy for mult in 1:150
-                try
-                    val = obstacles[guardpos + mult*CartesianIndex(newdir...)]
-                    isone(val) && break
-                    #if (val & dirdict[newdir]) != 0
-                        obscop = copy(obstacles)
-                        obscop[guardpos+cartdir] = 1
-                        if !leaves(obscop, guardpos, direction)
-                           # @info "putting obstacle at $(guardpos+cartdir) with direction $(direction)"
-                            push!(obspos, guardpos+cartdir)
-                        end
-                    #end
-                catch e
-                    e isa BoundsError && break
-                end
-            end
-            guardpos = guardpos + cartdir
-        end
-    end
-    display(obspos)
-    for pos in obspos
-        obstacles[pos] = -1
-    end
-    obstacles[iniguardpos] = -2=#
     length(obspos)
 end
 export solve2
