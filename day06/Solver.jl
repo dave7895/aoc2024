@@ -26,7 +26,6 @@ function solve1(parsed)
     obstacles, guardpos = parsed
     obstacles = copy(obstacles)
     direction = [-1, 0]
-    rotr90(v::AbstractVector) = [0 1; -1 0] * v
     leftmap = false
     while leftmap == false
         obstacles[guardpos] = 2
@@ -51,15 +50,25 @@ end
 export solve1
 
 
+rotr90(v::AbstractVector) = [0 1; -1 0] * v
+rotn(n) = ∘(repeat([rotr90], n)...)
+rotdict = Dict(CartesianIndex(rotn(i)([-1, 0])...)=>CartesianIndex(rotn(i+1)([-1, 0])...) for i in 1:4)
+println("rotdict defined")
+for k in keys(rotdict)
+    @show k
+    @show rotdict[k]
+    @show rotr90([k.I...])
+end
+
 function leaves(obstacles, guardpos, direction)
     guardpos = CartesianIndex(guardpos.I...)
     obstacles = copy(obstacles)
     direction = copy(direction)
-    rotr90(v::AbstractVector) = [0 1; -1 0] * v
     leftmap = false
-    for i in 1:50000
+    cartdir = CartesianIndex(direction...)
+    for i in 1:length(obstacles)
         infront = 0
-        cartdir = CartesianIndex(Tuple(direction))
+        #cartdir = CartesianIndex(Tuple(direction))
         try
             infront = obstacles[guardpos + cartdir]
         catch e
@@ -69,7 +78,8 @@ function leaves(obstacles, guardpos, direction)
             end
         end
         if isone(infront)
-            direction = rotr90(direction)
+            #direction = rotr90(direction)
+            cartdir = rotdict[cartdir]
         else
             guardpos = guardpos + cartdir
         end
