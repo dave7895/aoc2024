@@ -7,7 +7,7 @@ using AoC.Utils
 function parse_input(raw_data)
     raw_data
     layout = Int[]
-    sizedict = Dict()
+    sizedict = Dict{Int, Int8}()
     for (idx, char) in enumerate(collect(strip(raw_data)))
         idx -= 1
         n = parse(Int, char)
@@ -22,7 +22,9 @@ export parse_input
 
 function solve1(parsed)
     layout = copy(parsed[1])
-    while (lastf = findlast(>=(0), layout)) > (firstspace = findfirst(==(-1), layout))
+    lastf = lastindex(layout)
+    firstspace = firstindex(layout)
+    while (lastf = findprev(>=(0), layout, lastf)) > (firstspace = findnext(==(-1), layout, firstspace))
         layout[lastf], layout[firstspace] = layout[firstspace], layout[lastf]
     end
     n = 0
@@ -40,17 +42,27 @@ function solve2(parsed)
     layout = copy(parsed[1])
     dic = parsed[2]
     id2move = layout[findlast(>=(0), layout)]
+    lastpossible = lastindex(layout)
     while id2move > 0
         sz = dic[id2move]
         len = sz-1
-        locblock = findfirst(==(id2move), layout)
+        locblock = findprev(==(id2move), layout, lastpossible)-len
+        if isnothing(locblock)
+            @show id2move lastpossible layout
+        end
+        lastpossible = locblock
         empties = findall(==(-1), layout[1:locblock])
+        isempty(empties) && break
         loc = -1
-        for empt in empties
+        idx = 1
+        while idx < lastpossible #empt in empties
+            empt = empties[idx]
             if all(==(-1), layout[empt:empt+len])
                 loc = empt
                 break
             end
+            idx = findnext(>(empt+sz), empties, idx)
+            isnothing(idx) && break
         end
         if loc != -1 && loc < locblock
             layout[locblock:locblock+len], layout[loc:loc+len] = layout[loc:loc+len], layout[locblock:locblock+len]
