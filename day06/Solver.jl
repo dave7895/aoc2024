@@ -26,12 +26,9 @@ function solve1(parsed)
     obstacles, guardpos = parsed
     obstacles = copy(obstacles)
     direction = [-1, 0]
-    @show leaves(obstacles, guardpos, direction)
     rotr90(v::AbstractVector) = [0 1; -1 0] * v
     leftmap = false
     while leftmap == false
-        #@show guardpos
-        #display(obstacles)
         obstacles[guardpos] = 2
         infront = 0
         cartdir = CartesianIndex(direction...)
@@ -61,9 +58,6 @@ function leaves(obstacles, guardpos, direction)
     rotr90(v::AbstractVector) = [0 1; -1 0] * v
     leftmap = false
     for i in 1:50000
-        #@show guardpos
-        #display(obstacles)
-        #obstacles[guardpos] = 2
         infront = 0
         cartdir = CartesianIndex(Tuple(direction))
         try
@@ -92,7 +86,7 @@ function solve2(parsed)
     leftmap = false
     obspos = Set()
     lck = ReentrantLock()
-    Threads.@threads :greedy for i in eachindex(obstacles)
+    for i in eachindex(obstacles)
         obstacles[i] == 1 && continue
         obs = copy(obstacles)
         obs[i] = 1
@@ -168,7 +162,6 @@ function solve2(parsed)
         obstacles[pos] = -1
     end
     obstacles[iniguardpos] = -2=#
-    display(obstacles)
     length(obspos)
 end
 export solve2

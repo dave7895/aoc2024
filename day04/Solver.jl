@@ -50,7 +50,6 @@ function solve2(parsed)
         for (idxn, idxset) in enumerate(indices)
             try
                 str = String(parsed[idx .+ idxset])
-                println(str)
                 if str == "MSMS" || str == "MMSS"
                     nfound += 1
                     break

@@ -26,12 +26,11 @@ function calculate(nums, ops)
 end
 
 function solve1(parsed)
-    nsum = 0
-    @show length(parsed)
+    #=nsum = 0
     i = 0
     works = Int[]
     for (res, nums) in deepcopy(parsed)
-        print("\r$(res), $(Threads.threadid())")
+        #print("\r$(res), $(Threads.threadid())")
         found = false
         origres = res
         for i in 1:length(nums)
@@ -52,14 +51,14 @@ function solve1(parsed)
             end
         end
     end
-    nsum
+    nsum =#
     nsum = 0
     for (res, nums) in deepcopy(parsed)
         origres = res
-        @show origres
+        #@show origres
         possible = checkpossible(res, nums, false)
         if possible
-            @info "adding $origres to nsum"
+            #@info "adding $origres to nsum"
             nsum += origres
         end
     end
@@ -109,9 +108,8 @@ function checkpossible(res, nums, usecat=true, rem=-1)
 end
 
 function solve2(parsed)
-    @warn "starting part 2"
+    #@warn "starting part 2"
     nsum = 0
-    @show length(parsed)
     i = 0
     works = Int[]
     for (res, nums) in deepcopy(parsed)
@@ -120,10 +118,10 @@ function solve2(parsed)
         origres = res
         possible = checkpossible(res, nums, true)
         if possible
-            println("$origres works")
+            #println("$origres works")
             (nsum += origres)
         else
-            println("$origres does not work")
+            #println("$origres does not work")
         end
     end
     nsum

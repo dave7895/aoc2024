@@ -7,8 +7,6 @@ using LinearAlgebra
 function parse_input(raw_data)
     raw_data = strip(raw_data)
     lines = collect.(split(raw_data, '\n'))
-    println(length(lines))
-    println(length.(lines))
     return permutedims([lines...;;])
 end
 export parse_input
@@ -37,7 +35,7 @@ function solve1(parsed)
             end
         end
     end
-    println(join(String.(eachrow(map)), '\n'))
+    #println(join(String.(eachrow(map)), '\n'))
     length(nodesposs)
 end
 export solve1
@@ -56,7 +54,7 @@ function solve2(parsed)
                 diffvec = a2-a1
                 difftup = diffvec.I
                 lengthrange = -(maximum(a1.I)÷maximum(difftup)):(size(map, 1)-maximum(a1.I))
-                println(lengthrange)
+                #println(lengthrange)
                 for vm in lengthrange
                     v = a1 + vm*diffvec
                     try
@@ -70,7 +68,7 @@ function solve2(parsed)
             end
         end
     end
-    println(join(String.(eachrow(map)), '\n'))
+    #println(join(String.(eachrow(map)), '\n'))
     length(nodesposs)
 end
 export solve2

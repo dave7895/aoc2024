@@ -125,7 +125,7 @@ testinput = """
 61,13,29
 97,13,75,29,47"""
 testanswer_1 = 143
-testanswer_2 = nothing
+testanswer_2 = 123
 export testinput, testanswer_1, testanswer_2
 
 test() = AoC.test_solution(solution, testinput, testanswer_1, testanswer_2)
