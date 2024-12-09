@@ -58,27 +58,21 @@ function leaves(obstacles, guardpos, direction, needscopy=false)
     guardpos = CartesianIndex(guardpos.I...)
     needscopy && (obstacles = copy(obstacles))
     direction = copy(direction)
-    leftmap = false
     cartdir = CartesianIndex(direction...)
     for i in 1:length(obstacles)
         infront = 0
         #cartdir = CartesianIndex(Tuple(direction))
-        try
-            infront = obstacles[guardpos + cartdir]
-        catch e
-            if e isa BoundsError
-                leftmap = true
-                break
-            end
-        end
+        loc = guardpos + cartdir
+        valid = checkbounds(Bool, obstacles, loc)
+        valid || return true
+        infront = obstacles[loc]
         if isone(infront)
-            #direction = rotr90(direction)
             cartdir = rotr90(cartdir)
         else
-            guardpos = guardpos + cartdir
+            guardpos = loc
         end
     end
-    leftmap
+    false
 end
 
 function solve2(parsed)
