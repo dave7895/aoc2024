@@ -6,8 +6,9 @@ using AoC.Utils
 
 function parse_input(raw_data)
     raw_data
-    linearr = []
+    linearr = Vector{Char}[]
     for line in eachline(IOBuffer(raw_data))
+        isempty(line) && continue
         pline = collect(line)
         push!(linearr, pline)
     end
@@ -20,12 +21,12 @@ rotn(n) = ∘(repeat([rotr90], n)...)
 const neighbs4 = [CartesianIndex(rotn(i)([1, 0])...) for i in 1:4]
 
 function npeaks(map, startpos, h)
-    reachable = Set()
-    map[startpos] == '9' && return Set((startpos,))
+    reachable = CartesianIndex{2}[] #Set()
+    map[startpos] == '9' && return [startpos] #Set((startpos,))
     for neighb in neighbs4
         newpos = startpos + neighb
         !checkbounds(Bool, map, newpos) && continue
-        h + 1 == map[newpos] && (union!(reachable, npeaks(map, newpos, h+1)))
+        h + 1 == map[newpos] && (append!(reachable, npeaks(map, newpos, h+1)))
     end
     return reachable
 end
@@ -33,34 +34,22 @@ end
 function solve1(parsed)
     #println(join(join.(eachrow(parsed), ""), '\n'))
     nsum = 0
-    for starts in findall(==('0'), parsed)
+    allstarts = findall(==('0'), parsed)
+    isnothing(allstarts) && return 0
+    for starts in allstarts
         np = npeaks(parsed, starts, '0')
-        nsum += length(np)
+        nsum += length(unique(np))
     end
     nsum
 end
 export solve1
 
-function npaths(map, startpos, h)
-    map[startpos] == '9' && return [startpos]
-    paths = []
-    for neighb in neighbs4
-        newpos = startpos + neighb
-        !checkbounds(Bool, map, newpos) && continue
-        if h + 1 == map[newpos]
-            nps = npaths(map, newpos, h+1)
-            for np in nps
-                push!(paths, vcat(startpos, np))
-            end
-        end
-    end
-    paths
-end
-
 function solve2(parsed)
     nsum = 0
-    for starts in findall(==('0'), parsed)
-        np = npaths(parsed, starts, '0')
+    allstarts = findall(==('0'), parsed)
+    isnothing(allstarts) && return 0
+    for starts in allstarts
+        np = npeaks(parsed, starts, '0')
         nsum += length(np) 
     end
     nsum
