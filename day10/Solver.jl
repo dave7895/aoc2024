@@ -18,7 +18,7 @@ export parse_input
 
 rotr90(v::AbstractVector) = [0 1; -1 0] * v
 rotn(n) = ∘(repeat([rotr90], n)...)
-const neighbs4 = [CartesianIndex(rotn(i)([1, 0])...) for i in 1:4]
+const neighbs4 = CartesianIndex{2}[CartesianIndex(rotn(i)([1, 0])...) for i in 1:4]
 
 function npeaks(map, startpos, h)
     reachable = CartesianIndex{2}[] #Set()
