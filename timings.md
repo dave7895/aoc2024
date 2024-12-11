@@ -16,4 +16,4 @@ or 2 decimal places after the comma for subsecond times.
 | 08 | 0.0002| 0.02 | 0.34 | 0.36 |
 | 09 | 0.004 | 0.0006 | 0.84 | 0.85 |
 | 10 | 0.0002| 0.002 | 0.006 | 0.009 |
-| 11 | 0.005 | 0.54 | -- | -- |
+| 11 | 0.005 | 0.02 | 0.05 | 0.07 (including some compilation but no caching |

@@ -19,27 +19,41 @@ function splitint(str::AbstractString, strlen)
     parse.(Int, (str[1:halfidx], str[halfidx+1:end]))
 end
 
-function stonetransform(i)
-    if iszero(i)
-        return 1
+function upperhalfint(str, strlenh)
+    parse(Int, str[1:strlenh])
+end
+
+let cache = Dict{Tuple{Int, Int},Int}()
+global function recursivecount(num, level)
+    iszero(level) && return 1
+    haskey(cache, (num, level)) && return cache[num, level]
+    if iszero(num)
+        r = recursivecount(1, level-1)
+        cache[num, level] = r
+        return r
     end
-    strlen = round(Int, log10(i), RoundDown)+1 #length(istr)
+    strlen = round(Int, log10(num), RoundDown)+1 #length(istr)
     if iseven(strlen)
-        istr = "$i"
-        return splitint(istr, strlen)
+        istr = "$num"
+        #num1, num2 = splitint(istr, strlen)
+	strlenh = strlen÷2
+        num1 = upperhalfint(istr, strlenh)
+        num2 = num - 10^strlenh * num1
+        r = recursivecount(num1, level-1) + recursivecount(num2, level-1)
+        cache[num, level] = r
+        return r
     end
-    return i * 2024
+    r = recursivecount(num * 2024, level-1)
+    cache[num, level] = r
+    return r
+end
 end
 
 function solve1(parsed)
     stones = copy(parsed)
-    for i = 1:25
-        stones = map(stonetransform, Iterators.flatten(stones))
-    end
-    #display(stones)
     len = 0
     for x in stones
-        len += x isa Number ? 1 : 2
+        len += recursivecount(x, 25)
     end
     return len
 end
@@ -48,17 +62,11 @@ export solve1
 
 function solve2(parsed)
     stones = copy(parsed)
-    totallen = 0
-    for i = 1:75
-        newstones = Int[]
-        sizehint!(newstones, 2*length(stones))
-        for stone in Iterators.flatten(stones)
-            append!(newstones, stonetransform(stone))
-        end
-        stones = newstones
+    s = 0
+    for stone in stones
+        s += recursivecount(stone, 75)
     end
-    #display(stones)
-    return length(stones)
+    s
 end
 export solve2
 
