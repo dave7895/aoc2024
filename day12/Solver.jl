@@ -51,19 +51,21 @@ function solve1(parsed)
 end
 export solve1
 
-function getareaandsides(map, pos, char, visited, outvecs)
+function getareaandsides(map, pos, char, visited, localvisit)
     arperim = [1, 0]
+    nneighs = 0
     for neigh in neighbs4
         newpos = pos+neigh
         if !checkbounds(Bool, map, newpos) || map[newpos] != char
             arperim += [0, 1]
-            push!(outvecs, (pos, neigh))
         else
+            nneighs += 1
             newpos ∈ visited && continue
             push!(visited, newpos)
-            arperim += getareaandsides(map, newpos, char, visited, outvecs)
+            arperim += getareaandsides(map, newpos, char, visited, localvisit)
         end
     end
+    push!(localvisit, (pos, nneighs))
     return arperim
 end
 
@@ -73,28 +75,49 @@ function solve2(parsed)
     visited = Set{CartesianIndex{2}}()
     for startpos in eachindex(IndexCartesian(), map)
         startpos ∈ visited && continue
+        localvisit = Set()
         push!(visited, startpos)
-        outvecs = Set()
-        arper = getareaandsides(map, startpos, map[startpos], visited, outvecs)
-        isone(arper[1]) && (nsum += 4)
-        arper[1] == 2 && (nsum += 8)
-        display(outvecs)
+        ch = map[startpos]
+        arper = getareaandsides(map, startpos, ch, visited, localvisit)
         nsides = 0
-        sides = Set()
-        lookedat = Set()
-        for (c1, v1) in outvecs
-            for (c2, v2) in lookedat
-                c1 == c2 && continue
-                areneighs(c1, c2) || continue
-                !areneighs(c1+v1, c2+v2) && (push!(sides, (c2, v2)); nsides+=1)
+        # boolean not of same area
+        suitable(p) = !checkbounds(Bool, map, p) || map[p] != ch
+        for (node, nneighs) in localvisit
+            if iszero(nneighs)
+                nsides += 4
+                continue
+            elseif isone(nneighs)
+                @info "$node is end"
+                nsides += 2
+                continue
+            elseif nneighs == 2
+                for neigh in neighbs4
+                    u = node + neigh
+                    r = node + rotr90(neigh)
+                    if (suitable(u) && suitable(r))
+                        # node is outer corner
+                        nsides += 1
+                        if (suitable(3node-u-r))
+                            # node is inner corner as well
+                            nsides += 1
+                        end
+                        break
+                    end
+                end
+                continue
             end
-            push!(lookedat, (c1, v1))
+            for neigh in neighbs4
+                u = node + neigh
+                r = node + rotr90(neigh)
+                diagback = u+r-node
+                if (!suitable(u) && !suitable(r) && suitable(diagback))
+                    # node is inner corner
+                    # because 2 neighbours are but diagonal across is not same
+                    nsides += 1
+                end
+            end
         end
-        @show nsides
-        display(sides)
-        @info "arperim is $arper for $startpos with char $(map[startpos])"
         nsum += arper[1] * nsides
-        #@show visited
     end
     nsum
 end
@@ -104,12 +127,14 @@ export solve2
 solution = Solution(parse_input, solve1, solve2)
 
 testinput = """
-AAAA
-BBCD
-BBCC
-EEEC"""
+AAAAAA
+AAABBA
+AAABBA
+ABBAAA
+ABBAAA
+AAAAAA"""
 testanswer_1 = 140 
-testanswer_2 = 80
+testanswer_2 = 368
 export testinput, testanswer_1, testanswer_2
 
 test() = AoC.test_solution(solution, testinput, testanswer_1, testanswer_2)
