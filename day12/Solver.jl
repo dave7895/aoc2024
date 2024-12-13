@@ -80,14 +80,13 @@ function solve2(parsed)
         ch = map[startpos]
         arper = getareaandsides(map, startpos, ch, visited, localvisit)
         nsides = 0
-        # boolean not of same area
+        # boolean: not of same area
         suitable(p) = !checkbounds(Bool, map, p) || map[p] != ch
         for (node, nneighs) in localvisit
             if iszero(nneighs)
                 nsides += 4
                 continue
             elseif isone(nneighs)
-                @info "$node is end"
                 nsides += 2
                 continue
             elseif nneighs == 2
@@ -97,22 +96,20 @@ function solve2(parsed)
                     if (suitable(u) && suitable(r))
                         # node is outer corner
                         nsides += 1
-                        if (suitable(3node-u-r))
-                            # node is inner corner as well
-                            nsides += 1
-                        end
                         break
                     end
                 end
-                continue
             end
+            foundcorners = 1
             for neigh in neighbs4
+                foundcorners == nneighs && break
                 u = node + neigh
                 r = node + rotr90(neigh)
                 diagback = u+r-node
                 if (!suitable(u) && !suitable(r) && suitable(diagback))
                     # node is inner corner
                     # because 2 neighbours are but diagonal across is not same
+                    foundcorners += 1
                     nsides += 1
                 end
             end
