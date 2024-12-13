@@ -27,25 +27,18 @@ let cache = Dict{Tuple{Int, Int},Int}()
 global function recursivecount(num, level)
     iszero(level) && return 1
     haskey(cache, (num, level)) && return cache[num, level]
-    if iszero(num)
-        r = recursivecount(1, level-1)
-        cache[num, level] = r
-        return r
+    get!(cache, (num, level)) do
+        iszero(num) && return recursivecount(1, level-1)
+        strlen = round(Int, log10(num), RoundDown)+1 #length(istr)
+        if iseven(strlen)
+            istr = "$num"
+            strlenh = strlen÷2
+            num1 = upperhalfint(istr, strlenh)
+            num2 = num - 10^strlenh * num1
+            return recursivecount(num1, level-1) + recursivecount(num2, level-1)
+        end
+        return recursivecount(num * 2024, level-1)
     end
-    strlen = round(Int, log10(num), RoundDown)+1 #length(istr)
-    if iseven(strlen)
-        istr = "$num"
-        #num1, num2 = splitint(istr, strlen)
-	strlenh = strlen÷2
-        num1 = upperhalfint(istr, strlenh)
-        num2 = num - 10^strlenh * num1
-        r = recursivecount(num1, level-1) + recursivecount(num2, level-1)
-        cache[num, level] = r
-        return r
-    end
-    r = recursivecount(num * 2024, level-1)
-    cache[num, level] = r
-    return r
 end
 end
 
